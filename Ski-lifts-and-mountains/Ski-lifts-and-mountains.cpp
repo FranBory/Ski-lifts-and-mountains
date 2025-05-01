@@ -12,7 +12,6 @@ typedef struct Lift {
 	struct Lift* next_lift;
 } Lift;
 
-
 typedef struct {
 	int height;
 	int lift_count;
@@ -32,14 +31,29 @@ void addLiftToNode(Node* node,Lift* lift) {
 	node->lift_count++;
 }
 
+
+int costCount(Node* B, Node* A) { // przejscie z B na A
+	if (A->height <= B->height) return 1;
+	else return (A->height) - (B->height) + 1;
+}
+
 Node map[MAX_HEIGHT][MAX_WIDTH];
+Node nodePrevNode[MAX_HEIGHT * MAX_WIDTH][2];
+int distances[MAX_HEIGHT * MAX_WIDTH];
+
+
+void dijkstra(int w, int h, Node* start) {
+	
+}
 
 int main() {
-
 	for (int r = 0; r < MAX_HEIGHT; ++r) {
 		for (int c = 0; c < MAX_WIDTH; ++c) {
 			map[r][c].lift_count = 0;
 		}
+	}
+	for (int i = 0; i < MAX_HEIGHT*MAX_WIDTH; i++) {
+		distances[i] = INT_MAX;
 	}
 
 	int width, height;
@@ -68,6 +82,10 @@ int main() {
 			map[r][c].height = input;
 		}
 	}
+	distances[start_row * width + start_col] = 0;
+
+	
+	
 
 	printf("0");
 
