@@ -18,6 +18,34 @@ typedef struct {
 	Lift* lifts;
 } Node;
 
+typedef struct Queue {
+	int id;
+	int priority;
+	struct Queue* next;
+	struct Queue* prev;
+}Queue;
+
+Queue* pushQueue(Queue* head, int id, int prio) {
+	Queue* node = (Queue*)malloc(sizeof(node));
+	if (!node) return head;              
+	node->id = id;
+	node->priority = prio;
+	node->next = node->prev = NULL;
+	if (!head)                          
+		return node;
+	if (prio <= head->priority) {
+		node->next = head;
+		head->prev = node;
+		return node;                     
+	}
+	Queue* cur = head;
+	while (cur->next && cur->next->priority < prio) cur = cur->next;
+	node->next = cur->next;
+	node->prev = cur;
+	if (cur->next) cur->next->prev = node;
+	cur->next = node;
+	return head;                         
+}
 
 void addLiftToNode(Node* node,Lift* lift) {
 	if (node->lift_count == 0) {
@@ -43,10 +71,25 @@ int distances[MAX_HEIGHT * MAX_WIDTH];
 
 
 void dijkstra(int w, int h, Node* start) {
-	
+	//todo
 }
 
 int main() {
+
+	/////////////////
+
+	int a, b, c, d, e;
+	cin >> a >> b >> c >> d >> e;
+
+
+
+
+
+
+
+
+	////////////////
+
 	for (int r = 0; r < MAX_HEIGHT; ++r) {
 		for (int c = 0; c < MAX_WIDTH; ++c) {
 			map[r][c].lift_count = 0;
