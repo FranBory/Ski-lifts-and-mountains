@@ -47,6 +47,17 @@ Queue* pushQueue(Queue* head, int id, int prio) {
 	return head;                         
 }
 
+Queue* pop(Queue* head, int* id_out, int* prio_out) {
+	Queue* node = head;
+	*id_out = node->id;
+	*prio_out = node->priority;
+	head = head->next;
+	if (head) head->prev = NULL;
+	free(node);
+	return head;
+}
+
+
 void addLiftToNode(Node* node,Lift* lift) {
 	if (node->lift_count == 0) {
 		lift->next_lift = nullptr;
@@ -58,7 +69,6 @@ void addLiftToNode(Node* node,Lift* lift) {
 	}
 	node->lift_count++;
 }
-
 
 int costCount(Node* B, Node* A) { // przejscie z B na A
 	if (A->height <= B->height) return 1;
