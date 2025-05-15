@@ -19,65 +19,108 @@ typedef struct {
 	int lift_count;
 	Lift* lifts;
 } Node;
-
-typedef struct Queue {
+// kod na kopiec zostal napisany na podstawie kodu z tego artykułu
+//https://www.geeksforgeeks.org/c-program-to-implement-min-heap/
+struct HeapNode {
+	int dist;
 	int x;
 	int y;
-	int priority;
-	struct Queue* next;
-	struct Queue* prev;
-}Queue;
+};
+struct Heap {
+	HeapNode* arr;
+	int size;
+	int capacity;
+};
+
+typedef struct Heap heap;
+
+heap* createHeap(int capacity) {
+	heap* h = (heap*)malloc(sizeof(heap));
+	if (h == NULL) {
+		printf("Memory error");
+		return NULL;
+	}
+	h->size = 0;
+	h->capacity = capacity;
+	h->arr = (HeapNode*)malloc(capacity * sizeof(HeapNode));
+	return h;
+}
+
+void insertHelper(heap* h, int index) {
+	int parent = (index - 1) / 2;
+
+	if (h->arr[parent].dist > h->arr[index].dist) {
+		HeapNode temp = h->arr[parent];
+		h->arr[parent] = h->arr[index];
+		h->arr[index] = temp;
+
+		insertHelper(h, parent);
+	}
+}
+
+void heapify(heap* h, int index)
+{
+	int left = index * 2 + 1;
+	int right = index * 2 + 2;
+	int min = index;
+
+	// Checking whether our left or child element
+	// is at right index or not to avoid index error
+	if (left >= h->size || left < 0)
+		left = -1;
+	if (right >= h->size || right < 0)
+		right = -1;
+
+	// store left or right element in min if
+	// any of these is smaller that its parent
+	if (left != -1 && h->arr[left].dist < h->arr[index].dist)
+		min = left;
+	if (right != -1 && h->arr[right].dist < h->arr[min].dist)
+		min = right;
+
+	// Swapping the nodes
+	if (min != index) {
+		HeapNode temp = h->arr[min];
+		h->arr[min] = h->arr[index];
+		h->arr[index] = temp;
+
+		heapify(h, min);
+	}
+}
+
+HeapNode extractMin(heap* h){
+	HeapNode deleteItem = {-2,-1,-37};
+	// Checking if the heap is empty or not
+	if (h->size == 0) {
+		printf("\nHeap id empty.");
+		return deleteItem;
+	}
+
+	// Store the node in deleteItem that
+	// is to be deleted.
+	deleteItem = h->arr[0];
+
+	// Replace the deleted node with the last node
+	h->arr[0] = h->arr[h->size - 1];
+	// Decrement the size of heap
+	h->size--;
+	heapify(h, 0);
+	return deleteItem;
+}
+
+
+void insert(heap* h, HeapNode data)
+{
+	if (h->size < h->capacity) {
+		h->arr[h->size] = data;
+		insertHelper(h, h->size);
+		h->size++;
+	}
+}
+
 
 Node map[MAX_HEIGHT][MAX_WIDTH];
 int distances[MAX_HEIGHT][MAX_WIDTH];
-
-Queue* pushQueue(Queue* head, int x,int y, int prio) {
-	Queue* node = (Queue*)malloc(sizeof * node);
-	if (!node) return head;
-	node->x = x;
-	node->y = y;
-	node->priority = prio;
-	node->next = node->prev = NULL;
-	if (!head)                          
-		return node;
-	if (prio <= head->priority) {
-		node->next = head;
-		head->prev = node;
-		return node;                     
-	}
-	Queue* cur = head;
-	while (cur->next && cur->next->priority < prio) cur = cur->next;
-	node->next = cur->next;
-	node->prev = cur;
-	if (cur->next) cur->next->prev = node;
-	cur->next = node;
-	return head;                         
-}
-
-Queue* pop(Queue* head, int* x_out, int* y_out, int* prio_out) {
-	Queue* node = head;
-	*x_out = node->x;
-	*y_out = node->y;
-	*prio_out = node->priority;
-	head = head->next;
-	if (head) head->prev = NULL;
-	free(node);
-	return head;
-}
-
-
-//void addLiftToNode(Node* node,Lift* lift) {
-//	if (node->lift_count == 0) {
-//		lift->next_lift = nullptr;
-//		node->lifts = lift;
-//	}
-//	else {
-//		lift->next_lift = node->lifts;
-//		node->lifts = lift;
-//	}
-//	node->lift_count++;
-//}
-
 
 
 int costCount(Node* B, Node* A) { // przejscie z B na A
@@ -92,56 +135,49 @@ int costCount(Node* B, Node* A) { // przejscie z B na A
 }
 
 
-Queue* addEdge(Node map[][MAX_WIDTH], Queue* queue, int y,int x, int vy, int vx, int width, int height) {
-	if (vy < 0 || vx < 0 || vy >= height || vx >= width) return queue;
+void addEdge(Node map[][MAX_WIDTH], heap* queue, int y,int x, int vy, int vx, int width, int height) {
+	if (vy < 0 || vx < 0 || vy >= height || vx >= width) return;
 	else {
 		int cost = costCount(&map[y][x], &map[vy][vx]);
 		int newDist = distances[y][x] + cost;
 		if (newDist < distances[vy][vx]) {
 			distances[vy][vx] = newDist;
-			queue = pushQueue(queue, vx, vy, newDist);
+			HeapNode node = { newDist, vx,vy };
+			insert(queue, node);
 		}
-		return queue;
 	}
 }
-static void dumpQueue(const char* tag, const Queue* head)
-{
-	printf("[queue %s] ", tag);
-	for (const Queue* p = head; p; p = p->next)
-		printf("(%d:%d) ", p->x, p->priority);
-	puts("");
-}
 
-Queue* addEgdesToQueue(Node map[][MAX_WIDTH], Queue* queue, int x, int y, int width, int height) {
+
+void addEgdesToQueue(Node map[][MAX_WIDTH], heap* queue, int x, int y, int width, int height) {
 	int vx = x;
 	int vy = y-1;
-	queue = addEdge(map, queue,y,x, vy, vx, width,height); //x y-1
+	addEdge(map, queue,y,x, vy, vx, width,height); //x y-1
 	vx++;
 	vy++;
-	queue = addEdge(map, queue, y, x, vy, vx, width, height);//x+1 y	
+	addEdge(map, queue, y, x, vy, vx, width, height);//x+1 y	
 	vx--;
 	vy++;
-	queue = addEdge(map, queue, y, x, vy, vx, width, height);//x y+1
+	addEdge(map, queue, y, x, vy, vx, width, height);//x y+1
 	vy--;
 	vx--;
-	queue = addEdge(map, queue, y, x, vy, vx, width, height);//x-1 y
-	return queue;
+	addEdge(map, queue, y, x, vy, vx, width, height);//x-1 y
 }
 
 
 
 int dijkstra(Node map[][MAX_WIDTH], int sx,int sy ,int ex,int ey, int width, int height) {
-	Queue* pq = nullptr;
+	heap* pq = createHeap(width * height);
 	distances[sy][sx] = 0;
-	pq = pushQueue(pq, sx,sy, 0);
+	HeapNode hn = { 0,sx,sy };
+	insert(pq, hn);
 	while (true) {
-		int x,y, dist;
-		pq = pop(pq, &x, &y, &dist);
-		if (dist != distances[y][x]) continue;
-		if (x == ex && y == ey) {
-			return dist;
+		 hn = extractMin(pq);
+		if (hn.dist != distances[hn.y][hn.x]) continue;
+		if (hn.x == ex && hn.y == ey) {
+			return hn.dist;
 		}// wynik
-		pq = addEgdesToQueue(map, pq,x,y, width, height);		
+		addEgdesToQueue(map, pq,hn.x,hn.y, width, height);		
 		//dumpQueue("after  push", pq);
 	}
 	return -2137;
