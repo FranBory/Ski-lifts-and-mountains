@@ -23,10 +23,17 @@ This project is a **C language implementation** of a pathfinding algorithm over 
 4. Prepare an input file (e.g. `input.txt`) with map and lift data.
 5. Run the executable with input redirection:
    - Press `Ctrl + F5` to run
-   - Or run in Terminal:  
-     ```
-     SkiLifts.exe < input.txt
-     ```
 
 ## 🧪 Input Format
+
+width height
+start_col start_row
+end_col end_row
+number_of_lifts
+[start_col start_row end_col end_row travel_time interval]
+[height map values...]
+
+## 📤 Output Format
+
+A single integer – the **shortest time** to reach the destination.
 
